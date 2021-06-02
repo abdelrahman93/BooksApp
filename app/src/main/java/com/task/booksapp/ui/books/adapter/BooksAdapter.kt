@@ -6,20 +6,17 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.task.booksapp.R
 import com.task.booksapp.data.model.BookItem
+import kotlinx.android.synthetic.main.item_book.view.*
 
 
 class BooksAdapter(
-    private val booksList: ArrayList<BookItem>,
+    private val booksList: ArrayList<BookItem?>?,
     private val onClick: (BookItem) -> Unit
 ) :
     RecyclerView.Adapter<BooksAdapter.BooksViewHolder>() {
 
-    override fun getItemCount() = booksList.size
+    override fun getItemCount() = booksList?.size!!
 
-    fun addAll(newBooksList: List<BookItem>) {
-        booksList.addAll(newBooksList)
-        notifyDataSetChanged()
-    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BooksViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -28,12 +25,20 @@ class BooksAdapter(
     }
 
     override fun onBindViewHolder(holder: BooksViewHolder, position: Int) {
-        holder.bind(booksList[position])
+        booksList?.get(position)?.let { holder.bind(it) }
     }
+
 
     inner class BooksViewHolder(private val rootView: View) : RecyclerView.ViewHolder(rootView) {
         fun bind(bookItem: BookItem) {
+            this.rootView.tvBookTitle.text = bookItem.name
+            this.rootView.tvBookType.text = bookItem.type
 
+            this.rootView.setOnClickListener {
+                onClick.invoke(bookItem)
+            }
         }
     }
 }
+
+
