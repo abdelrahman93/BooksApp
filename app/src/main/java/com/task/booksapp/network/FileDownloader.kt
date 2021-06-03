@@ -1,4 +1,4 @@
-package com.task.booksapp.utilities
+package com.task.booksapp.network
 
 import io.reactivex.Observable
 import okhttp3.OkHttpClient
@@ -13,7 +13,6 @@ class FileDownloader(okHttpClient: OkHttpClient) {
         private const val BUFFER_LENGTH_BYTES = 1024 * 8
         private const val HTTP_TIMEOUT = 30
     }
-
     private var okHttpClient: OkHttpClient
 
     init {
@@ -42,7 +41,9 @@ class FileDownloader(okHttpClient: OkHttpClient) {
                             fileOut.write(buffer, 0, bytes)
                             bytesCopied += bytes
                             bytes = read(buffer)
-                            emitter.onNext(((bytesCopied * 100)/length).toInt())
+                            var lastValue= ((bytesCopied * 100)/length).toInt()
+                            if (length>0&&lastValue>0)
+                            emitter.onNext(lastValue)
                         }
                     }
                     emitter.onComplete()

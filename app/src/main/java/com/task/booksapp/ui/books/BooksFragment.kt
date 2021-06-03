@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import android.os.StrictMode
+import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.task.booksapp.R
 import com.task.booksapp.base.BaseFragment
@@ -13,6 +14,7 @@ import com.task.booksapp.data.model.DownloadStatusTypes
 import com.task.booksapp.di.component.DaggerAppComponent
 import com.task.booksapp.ui.books.adapter.BooksAdapter
 import com.task.booksapp.utilities.getJsonDataFromAsset
+import com.task.booksapp.utilities.saveFileInStorage
 import com.tbruyelle.rxpermissions2.RxPermissions
 import kotlinx.android.synthetic.main.fragment_books.*
 import java.io.File
@@ -20,11 +22,8 @@ import java.io.File
 
 class BooksFragment : BaseFragment<BooksViewModel>(BooksViewModel::class.java) {
 
-    var dataSetbooks: ArrayList<BookItem?>? = null
-
-    var downloadedFiles = HashMap<Int, File>()
-
-
+    private var dataSetbooks: ArrayList<BookItem?>? = null
+    private var downloadedFiles = HashMap<Int, File>()
     private var layoutManager: LinearLayoutManager? = null
 
     private lateinit var adapter: BooksAdapter
@@ -49,32 +48,34 @@ class BooksFragment : BaseFragment<BooksViewModel>(BooksViewModel::class.java) {
                 dataSetbooks = viewState.booksList.books
                 initBooksListList(dataSetbooks)
             }
+
+            //First status of downloading
             is BooksViewState.FileDownloading -> {
                 dataSetbooks?.get(viewState.postion)?.downloadProgress = viewState.status
                 dataSetbooks?.get(viewState.postion)?.downloadStatusTypes =
                     DownloadStatusTypes.Downloading
+
                 adapter.notifyItemChanged(viewState.postion)
             }
-            is BooksViewState.FileDownloaded -> {
-                val filePath = activity?.getExternalFilesDir(activity?.callingPackage)
-                    .toString() + "/Downloaded Files"
-                val fileDirectory = File(filePath)
-                fileDirectory.mkdirs()
-                val fileSrc = File(viewState.downloadedFile.path)
-                val fileDest = File(fileDirectory.path)
-                fileSrc.copyTo(fileDest, true)
 
-                downloadedFiles.put(viewState.postion, fileDest)
+            is BooksViewState.UpdateProgress -> {
+                updateDownloadProgressBar(viewState.status, viewState.postion)
+            }
+
+            is BooksViewState.FileDownloaded -> {
+                downloadedFiles[viewState.postion] =
+                    saveFileInStorage(activity, viewState.downloadedFile.path)
                 dataSetbooks?.get(viewState.postion)?.downloadProgress = viewState.status
                 dataSetbooks?.get(viewState.postion)?.downloadStatusTypes =
                     DownloadStatusTypes.Downloaded
+
                 adapter.notifyItemChanged(viewState.postion)
             }
 
 
             is BooksViewState.StorageGranted -> {
                 activity?.cacheDir?.let {
-                    viewModel.download(
+                    viewModel.downloadFile(
                         viewState.bookItem.url,
                         it,
                         viewState.bookItem.name,
@@ -83,16 +84,21 @@ class BooksFragment : BaseFragment<BooksViewModel>(BooksViewModel::class.java) {
                 }
             }
 
-
+            is BooksViewState.StorageDenied -> {
+                Toast.makeText(activity, getString(R.string.permission_error), Toast.LENGTH_LONG)
+                    .show()
+            }
         }
+
+
     }
+
 
     override fun startRequest() {
         getJsonDataFromAsset(requireContext())?.let { viewModel.getBooksList(it) }
     }
 
     override fun actions() {
-
     }
 
 
@@ -103,6 +109,7 @@ class BooksFragment : BaseFragment<BooksViewModel>(BooksViewModel::class.java) {
 
     private fun onDownloadClicked(bookItem: BookItem, position: Int) {
         when (bookItem.downloadStatusTypes) {
+
             DownloadStatusTypes.ToDownload -> {
                 viewModel.checkPermission(RxPermissions.getInstance(activity), bookItem, position)
 
@@ -143,6 +150,18 @@ class BooksFragment : BaseFragment<BooksViewModel>(BooksViewModel::class.java) {
         intent.setDataAndType(intentUri, "video/mp4")
         startActivity(intent)
 
+    }
+
+
+    /*
+     * update progress bar in recycler view
+     * get viewHolder from position and progress bar from that viewHolder
+     */
+    private fun updateDownloadProgressBar(bookItem: Int?, position: Int) {
+        val viewHolder = rvBooksList.findViewHolderForAdapterPosition(position)
+        if (viewHolder != null) {
+            bookItem?.let { (viewHolder as BooksAdapter.BooksViewHolder).bind(it, position) }
+        }
     }
 
 }

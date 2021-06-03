@@ -2,15 +2,13 @@ package com.task.booksapp.ui.books
 
 import android.Manifest
 import android.util.Log
-import android.widget.Toast
-import com.google.android.material.tabs.TabLayoutMediator
 import com.task.booksapp.base.BaseViewModel
 import com.task.booksapp.data.Loader
 import com.task.booksapp.data.model.BookItem
 import com.task.booksapp.di.module.SCHEDULER_IO
 import com.task.booksapp.di.module.SCHEDULER_MAIN_THREAD
 import com.task.booksapp.domain.usecase.books.BooksUseCase
-import com.task.booksapp.utilities.FileDownloader
+import com.task.booksapp.network.FileDownloader
 import com.tbruyelle.rxpermissions2.RxPermissions
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Scheduler
@@ -50,17 +48,16 @@ class BooksViewModel @Inject constructor(
         )
     }
 
-    fun download(URL:String,cacheDir:File,fileName:String,pos:Int){
+    fun downloadFile(URL:String,cacheDir:File,fileName:String,pos:Int){
         val targetFile = File(cacheDir, fileName)
-
+        internalState.value = BooksViewState.FileDownloading(0,pos)
         disposable = fileDownloader.download(URL, targetFile)
             .throttleFirst(1, TimeUnit.SECONDS)
             .toFlowable(BackpressureStrategy.LATEST)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe({
-                Log.d("TAG", "download:$it$fileName")
-                internalState.value = BooksViewState.FileDownloading(it,pos)
+                internalState.value = BooksViewState.UpdateProgress(it,pos)
             }, {
                 Log.d("TAG", "download:error"+it.localizedMessage)
             }, {
@@ -87,7 +84,6 @@ class BooksViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         disposable.dispose()
-
     }
 
 }

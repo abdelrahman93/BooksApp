@@ -1,6 +1,5 @@
 package com.task.booksapp.ui.books.adapter
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,12 +33,11 @@ class BooksAdapter(
 
 
     inner class BooksViewHolder(private val rootView: View) : RecyclerView.ViewHolder(rootView) {
-        fun bind(bookItem: BookItem, pos: Int) {
-            this.rootView.tvBookTitle.text = bookItem.name
-            this.rootView.tvBookType.text = bookItem.type
-            Log.i("TAG", "onDownloadClicked: "+bookItem.downloadStatusTypes)
+        fun bind(bookItem: BookItem?, pos: Int) {
+            this.rootView.tvBookTitle.text = bookItem?.name
+            this.rootView.tvBookType.text = bookItem?.type
 
-            when (bookItem.type) {
+            when (bookItem?.type) {
                 VIDEO_TYPE -> {
                     this.rootView.ivBookType.background =
                         ContextCompat.getDrawable(rootView.context, R.drawable.ic_video)
@@ -51,10 +49,10 @@ class BooksAdapter(
             }
 
             this.rootView.ivDownload.setOnClickListener {
-                onClick.invoke(bookItem, pos)
+                bookItem?.let { it1 -> onClick.invoke(it1, pos) }
             }
 
-            when (bookItem.downloadStatusTypes) {
+            when (bookItem?.downloadStatusTypes) {
                 DownloadStatusTypes.ToDownload -> {
                     this.rootView.consProgressDownload.visibility = View.GONE
                     this.rootView.ivDownload.visibility = View.VISIBLE
@@ -82,6 +80,15 @@ class BooksAdapter(
 
 
         }
+
+        //Update Progress bar only
+        fun bind(progress: Int, pos: Int) {
+            this.rootView.pbDownload.progress = progress
+            this.rootView.tvDownload.text =
+                String.format("%s %s", progress.toString(), "%")
+        }
+
+
     }
 
     companion object {

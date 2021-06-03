@@ -25,6 +25,7 @@ class BooksViewState : BaseViewState() {
     }
 
     class FileDownloading(val status: Int,val postion: Int) : BaseViewState()
+    class UpdateProgress(val status: Int,val postion: Int) : BaseViewState()
     class FileDownloaded(val status: Int,val postion: Int,val downloadedFile: File) : BaseViewState()
 
     class StorageGranted(val bookItem: BookItem, val position: Int): BaseViewState()
