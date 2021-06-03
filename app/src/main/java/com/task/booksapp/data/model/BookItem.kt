@@ -10,5 +10,11 @@ data class BookItem(
 	@field:SerializedName("url")
 	val url: String = "",
 	@field:SerializedName("name")
-	val name: String = ""
-)
+	val name: String = "",
+	var downloadProgress: Int = 0,
+	var downloadStatusTypes: DownloadStatusTypes?= DownloadStatusTypes.ToDownload
+
+
+
+
+	)

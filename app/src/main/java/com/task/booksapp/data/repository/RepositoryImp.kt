@@ -13,7 +13,7 @@ class RepositoryImp : Repository {
     override fun getBooksList(jsonFileString: String): Observable<BooksList> {
         val listBooksType: Type = object : TypeToken<ArrayList<BookItem?>?>() {}.type
         val model: ArrayList<BookItem?>? = Gson().fromJson(jsonFileString, listBooksType)
-        val booksList =BooksList(books = model)
+        val booksList = BooksList(books = model)
         return Observable.just(booksList)
     }
 
